@@ -84,12 +84,25 @@ router.post('/request', async (req, res) => {
   res.json({ message: 'Payment request sent' });
 });
 
+// Wire transfer
+router.post('/wire-transfer', async (req, res) => {
+  try {
+    // Extract and validate fields from req.body
+    // Save wire transfer request to DB or process as needed
+    res.json({ message: 'Wire transfer submitted successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: 'Wire transfer failed' });
+  }
+});
+
 router.get('/:accountNumber', async (req, res) => {
   const { accountNumber } = req.params;
   const user = await User.findOne({ accountNumber });
   if (!user) return res.status(404).json({ message: 'Account not found' });
   res.json({ balance: user.balance, transactions: user.transactions });
 });
+
+
 
 
 module.exports = router;

@@ -21,7 +21,7 @@ const AdminDashboard: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5000/api/admin/users', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -31,7 +31,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch('http://localhost:5000/api/admin/users', {
+    fetch('https://newcommercebank.onrender.com/api/admin/users', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -46,7 +46,7 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     setMessage('');
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:5000/api/admin/credit', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/admin/credit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(creditForm),
@@ -59,7 +59,7 @@ const AdminDashboard: React.FC = () => {
   // Enable/disable login
   const handleLoginToggle = async (userId: string, enabled: boolean) => {
     const token = localStorage.getItem('token');
-    await fetch('http://localhost:5000/api/admin/user-login', {
+    await fetch('https://newcommercebank.onrender.com/api/admin/user-login', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ userId, enabled }),
@@ -71,7 +71,7 @@ const AdminDashboard: React.FC = () => {
   const handleDelete = async (userId: string) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     const token = localStorage.getItem('token');
-    await fetch(`http://localhost:5000/api/admin/user/${userId}`, {
+    await fetch(`https://newcommercebank.onrender.com/api/admin/user/${userId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -81,7 +81,7 @@ const AdminDashboard: React.FC = () => {
   // Approve transfer (example: approve the first unapproved transaction)
   const handleApproveTransfer = async (userId: string, transactionId: string) => {
     const token = localStorage.getItem('token');
-    await fetch('http://localhost:5000/api/admin/approve-transfer', {
+    await fetch('https://newcommercebank.onrender.com/api/admin/approve-transfer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ userId, transactionId }),

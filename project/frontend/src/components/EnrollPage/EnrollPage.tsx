@@ -35,7 +35,7 @@ const EnrollPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/enroll/send-otp', {
+      const response = await fetch('https://newcommercebank.onrender.com/api/enroll/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -60,7 +60,7 @@ const EnrollPage: React.FC = () => {
     setMessage('');
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/api/enroll', {
+      const response = await fetch('https://newcommercebank.onrender.com/api/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

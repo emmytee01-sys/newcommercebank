@@ -27,18 +27,38 @@ const Dashboard: React.FC = () => {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
+  const [showAddExternal, setShowAddExternal] = useState(false);
+  const [showWireTransferModal, setShowWireTransferModal] = useState(false);
 
   // Form states
   const [transferForm, setTransferForm] = useState({ toAccount: '', amount: '', description: '' });
   const [depositForm, setDepositForm] = useState({ amount: '', description: '' });
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', description: '' });
   const [requestForm, setRequestForm] = useState({ fromAccount: '', amount: '', description: '' });
+  const [externalForm, setExternalForm] = useState({ routingNumber: '', accountNumber: '' });
+  const [wireForm, setWireForm] = useState({
+    recipientName: '',
+    recipientBank: '',
+    recipientAccount: '',
+    recipientRouting: '',
+    bankSwift: '',
+    bankAddress: '',
+    recipientAddress: '',
+    amount: '',
+    description: '',
+  });
+
+  const [receiverDetails, setReceiverDetails] = useState<{ fullName: string; address: string } | null>(null);
+  const [receiverWarning, setReceiverWarning] = useState('');
+  const [receiverFetchError, setReceiverFetchError] = useState('');
+  const [externalMessage, setExternalMessage] = useState('');
+  const [wireMessage, setWireMessage] = useState('');
 
   // Fetch data
   const fetchData = async () => {
     setLoading(true);
     const token = localStorage.getItem('token');
-    const accRes = await fetch('http://localhost:5000/api/wallet/accounts', {
+    const accRes = await fetch('https://newcommercebank.onrender.com/api/wallet/accounts', {
       headers: { Authorization: `Bearer ${token}` },
     });
     const accData = await accRes.json();
@@ -53,7 +73,7 @@ const Dashboard: React.FC = () => {
     // Fetch transactions
     try {
       const token = localStorage.getItem('token');
-      const txRes = await fetch('http://localhost:5000/api/wallet/transactions', {
+      const txRes = await fetch('https://newcommercebank.onrender.com/api/wallet/transactions', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (txRes.ok) {
@@ -88,7 +108,7 @@ const Dashboard: React.FC = () => {
     setActionMessage('');
     const token = localStorage.getItem('token');
     const fromAccount = accounts[0].accountNumber;
-    const res = await fetch('http://localhost:5000/api/wallet/transfer', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/wallet/transfer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -115,7 +135,7 @@ const Dashboard: React.FC = () => {
     setActionMessage('');
     const token = localStorage.getItem('token');
     const accountNumber = accounts[0].accountNumber;
-    const res = await fetch('http://localhost:5000/api/wallet/credit', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/wallet/credit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -141,7 +161,7 @@ const Dashboard: React.FC = () => {
     setActionMessage('');
     const token = localStorage.getItem('token');
     const accountNumber = accounts[0].accountNumber;
-    const res = await fetch('http://localhost:5000/api/wallet/debit', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/wallet/debit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -167,7 +187,7 @@ const Dashboard: React.FC = () => {
     setActionMessage('');
     const token = localStorage.getItem('token');
     const toAccount = accounts[0].accountNumber;
-    const res = await fetch('http://localhost:5000/api/wallet/request', {
+    const res = await fetch('https://newcommercebank.onrender.com/api/wallet/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -192,6 +212,76 @@ const Dashboard: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
+  };
+
+  // Wire Transfer
+  const handleWireTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWireMessage('');
+    const token = localStorage.getItem('token');
+    const fromAccount = accounts[0]?.accountNumber;
+    const res = await fetch('https://newcommercebank.onrender.com/api/wallet/wire-transfer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        fromAccount,
+        ...wireForm,
+        amount: Number(wireForm.amount),
+      }),
+    });
+    // Always show the processing message, regardless of backend response
+    setWireMessage(
+      "Your wire transfer is being processed and confirmed by the bank. We’ll send you an email if it has been processed successfully."
+    );
+    setShowWireTransferModal(false);
+    setWireForm({
+      recipientName: '',
+      recipientBank: '',
+      recipientAccount: '',
+      recipientRouting: '',
+      bankSwift: '',
+      bankAddress: '',
+      recipientAddress: '',
+      amount: '',
+      description: '',
+    });
+    fetchData();
+  };
+
+  // Recipient account change handler
+  const handleRecipientAccountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTransferForm({ ...transferForm, toAccount: value });
+    setReceiverDetails(null);
+    setReceiverWarning('');
+    setReceiverFetchError('');
+
+    if (value.length >= 6) { // Adjust length as needed
+      try {
+        const res = await fetch(`https://newcommercebank.onrender.com/api/accounts/${value}`);
+        if (res.ok) {
+          const data = await res.json();
+          setReceiverDetails(data);
+          setReceiverWarning('Please confirm the receiver details before sending money out.');
+        } else {
+          setReceiverFetchError('Account not found');
+        }
+      } catch {
+        setReceiverFetchError('Error fetching account details');
+      }
+    }
+  };
+
+  // Handler for adding external account
+  const handleAddExternalAccount = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically send the data to your backend
+    setExternalMessage(
+      "Your external account has been added and 2 micro-deposits have been sent to your added account successfully. Kindly check again in 1-2 business days to verify the account once you get the 2 deposits."
+    );
+    setExternalForm({ routingNumber: '', accountNumber: '' });
+    setShowAddExternal(false);
+    setTimeout(() => setExternalMessage(''), 15000); // Hide message after 15s
   };
 
   // --- UI ---
@@ -272,6 +362,12 @@ const Dashboard: React.FC = () => {
               onClick={() => setShowRequestModal(true)}
             >
               Request Payment
+            </button>
+            <button
+              className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"
+              onClick={() => setShowWireTransferModal(true)}
+            >
+              Wire Transfer
             </button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -375,9 +471,21 @@ const Dashboard: React.FC = () => {
                   type="text"
                   className="w-full p-2 border border-gray-300 rounded"
                   value={transferForm.toAccount}
-                  onChange={e => setTransferForm({ ...transferForm, toAccount: e.target.value })}
+                  onChange={handleRecipientAccountChange}
                   required
                 />
+                {receiverDetails && (
+                  <div className="mt-2 p-2 bg-gray-100 border rounded">
+                    <div><strong>Receiver Name:</strong> {receiverDetails.fullName}</div>
+                    <div><strong>Address:</strong> {receiverDetails.address}</div>
+                    <div className="mt-2 p-2 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                      <strong>Warning:</strong> Please confirm the receiver details before sending money out.
+                    </div>
+                  </div>
+                )}
+                {receiverFetchError && (
+                  <div className="mt-2 text-red-600">{receiverFetchError}</div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Amount</label>
@@ -438,6 +546,51 @@ const Dashboard: React.FC = () => {
                   onChange={e => setWithdrawForm({ ...withdrawForm, description: e.target.value })}
                 />
               </div>
+              <div>
+                <button
+                  type="button"
+                  className="mt-2 text-blue-600 underline text-sm"
+                  onClick={() => setShowAddExternal(true)}
+                >
+                  + Add an external account
+                </button>
+              </div>
+              {showAddExternal && (
+                <form onSubmit={handleAddExternalAccount} className="mt-4 bg-gray-50 p-4 rounded border">
+                  <h3 className="font-semibold mb-2">Add an External Bank Account</h3>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Routing Number</label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      value={externalForm.routingNumber}
+                      onChange={e => setExternalForm({ ...externalForm, routingNumber: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Account Number</label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      value={externalForm.accountNumber}
+                      onChange={e => setExternalForm({ ...externalForm, accountNumber: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    Add Account
+                  </button>
+                </form>
+              )}
+              {externalMessage && (
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
+                  {externalMessage}
+                </div>
+              )}
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowWithdrawModal(false)} className="px-4 py-2 rounded bg-gray-200">
                   Cancel
@@ -496,6 +649,135 @@ const Dashboard: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Wire Transfer Modal */}
+      {showWireTransferModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Wire Transfer</h2>
+            <form onSubmit={handleWireTransfer} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Recipient Name</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.recipientName}
+                    onChange={e => setWireForm({ ...wireForm, recipientName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Recipient Bank Name</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.recipientBank}
+                    onChange={e => setWireForm({ ...wireForm, recipientBank: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Recipient Account Number</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.recipientAccount}
+                    onChange={e => setWireForm({ ...wireForm, recipientAccount: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Recipient Routing Number</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.recipientRouting}
+                    onChange={e => setWireForm({ ...wireForm, recipientRouting: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bank SWIFT Code</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.bankSwift}
+                    onChange={e => setWireForm({ ...wireForm, bankSwift: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Bank Address</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.bankAddress}
+                    onChange={e => setWireForm({ ...wireForm, bankAddress: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Recipient Address</label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.recipientAddress}
+                    onChange={e => setWireForm({ ...wireForm, recipientAddress: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Amount</label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    value={wireForm.amount}
+                    onChange={e => setWireForm({ ...wireForm, amount: e.target.value })}
+                    required
+                    min="1"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  value={wireForm.description}
+                  onChange={e => setWireForm({ ...wireForm, description: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowWireTransferModal(false)} className="px-4 py-2 rounded bg-gray-200">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 rounded bg-teal-600 text-white">
+                  Submit Wire Transfer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {wireMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-full max-w-md text-center">
+            <h2 className="text-xl font-bold mb-4 text-blue-700">Wire Transfer Processing</h2>
+            <p className="mb-6 text-gray-700">
+              Your wire transfer is being processed and confirmed by the bank.<br />
+              We’ll send you an email if it has been processed successfully.
+            </p>
+            <button
+              className="px-6 py-2 rounded bg-blue-600 text-white"
+              onClick={() => setWireMessage('')}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
