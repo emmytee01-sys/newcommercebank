@@ -55,6 +55,7 @@ const Dashboard: React.FC = () => {
   const [receiverFetchError, setReceiverFetchError] = useState('');
   const [externalMessage, setExternalMessage] = useState('');
   const [wireMessage, setWireMessage] = useState('');
+  const [userFirstName, setUserFirstName] = useState('');
 
   // Fetch data
   const fetchData = async () => {
@@ -98,6 +99,25 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('https://newcommercebank.onrender.com/api/wallet/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserFirstName(data.firstName || '');
+        }
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchUserProfile();
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -333,14 +353,8 @@ const Dashboard: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold">
               Welcome back
-              {(() => {
-                // Try to get firstName from accounts[0], else from localStorage, else empty
-                const firstName =
-                  accounts[0]?.firstName ||
-                  localStorage.getItem('firstName') ||
-                  '';
-                return firstName ? `, ${firstName}` : '';
-              })()}!
+              {userFirstName ? `, ${userFirstName}` : ''}
+              !
             </h1>
           </div>
           <div className="text-right">

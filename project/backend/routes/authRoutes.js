@@ -37,6 +37,13 @@ router.post('/login', async (req, res) => {
   res.json({ token, isAdmin: user.isAdmin }); // <-- include isAdmin
 });
 
+// Example route
+router.get('/me', authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select('firstName lastName email');
+  res.json(user);
+});
+
+
 // Route for admin to get all users
 router.get('/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
   // Only accessible by admins
