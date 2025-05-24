@@ -96,6 +96,13 @@ router.post('/wire-transfer', async (req, res) => {
   }
 });
 
+// Example route
+router.get('/me', authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select('firstName lastName email');
+  res.json(user);
+});
+
+
 router.get('/:accountNumber', async (req, res) => {
   const { accountNumber } = req.params;
   const user = await User.findOne({ accountNumber });
