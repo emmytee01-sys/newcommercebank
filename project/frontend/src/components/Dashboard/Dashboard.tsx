@@ -16,6 +16,7 @@ type Account = {
   currency: string;
   routingNumber: string;
   balance: number;
+  firstName?: string;
 };
 
 const Dashboard: React.FC = () => {
@@ -29,6 +30,7 @@ const Dashboard: React.FC = () => {
   const [actionMessage, setActionMessage] = useState('');
   const [showAddExternal, setShowAddExternal] = useState(false);
   const [showWireTransferModal, setShowWireTransferModal] = useState(false);
+  const [showTransferSuccess, setShowTransferSuccess] = useState(false); // <-- New state for transfer success
 
   // Form states
   const [transferForm, setTransferForm] = useState({ toAccount: '', amount: '', description: '' });
@@ -120,8 +122,8 @@ const Dashboard: React.FC = () => {
     });
     const data = await res.json();
     if (res.ok) {
-      setActionMessage('Transfer successful!');
       setShowTransferModal(false);
+      setShowTransferSuccess(true); // Show success modal
       setTransferForm({ toAccount: '', amount: '', description: '' });
       fetchData();
     } else {
@@ -329,7 +331,17 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <header className="bg-blue-800 text-white py-6 px-8 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Welcome back!</h1>
+            <h1 className="text-2xl font-bold">
+              Welcome back
+              {(() => {
+                // Try to get firstName from accounts[0], else from localStorage, else empty
+                const firstName =
+                  accounts[0]?.firstName ||
+                  localStorage.getItem('firstName') ||
+                  '';
+                return firstName ? `, ${firstName}` : '';
+              })()}!
+            </h1>
           </div>
           <div className="text-right">
             <p className="text-lg font-bold">Total Balance</p>
@@ -775,6 +787,24 @@ const Dashboard: React.FC = () => {
             <button
               className="px-6 py-2 rounded bg-blue-600 text-white"
               onClick={() => setWireMessage('')}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Success Modal */}
+      {showTransferSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-full max-w-md text-center">
+            <h2 className="text-xl font-bold mb-4 text-green-700">Transfer Successful</h2>
+            <p className="mb-6 text-gray-700">
+              The money will be credited to the receiver's account in a few minutes.
+            </p>
+            <button
+              className="px-6 py-2 rounded bg-green-600 text-white"
+              onClick={() => setShowTransferSuccess(false)}
             >
               Close
             </button>

@@ -22,7 +22,7 @@ router.get('/accounts', authMiddleware, async (req, res) => {
     accountType: user.accountType || 'Checking',
     status: user.status || 'Active',
     currency: user.currency || 'USD',
-    routingNumber: user.routingNumber || '123456789',
+    routingNumber: user.routingNumber || '101000019',
     balance: user.balance,
   }];
 
@@ -57,19 +57,20 @@ router.post('/transfer', async (req, res) => {
   const { fromAccount, toAccount, amount, description } = req.body;
   const sender = await User.findOne({ accountNumber: fromAccount });
   const receiver = await User.findOne({ accountNumber: toAccount });
+
   if (!sender || !receiver) return res.status(404).json({ message: 'Account not found' });
   if (sender.balance < amount) return res.status(400).json({ message: 'Insufficient funds' });
 
-  sender.balance -= Number(amount);
-  receiver.balance += Number(amount);
+  sender.balance -= amount;
+  receiver.balance += amount;
 
-  sender.transactions.push({ type: 'transfer', amount, description, to: toAccount });
-  receiver.transactions.push({ type: 'credit', amount, description, from: fromAccount });
+  sender.transactions.push({ type: 'debit', amount, description, to: toAccount, date: new Date() });
+  receiver.transactions.push({ type: 'credit', amount, description, from: fromAccount, date: new Date() });
 
   await sender.save();
   await receiver.save();
 
-  res.json({ senderBalance: sender.balance, receiverBalance: receiver.balance });
+  res.json({ message: 'Transfer successful' });
 });
 
 // Request payment (record a request, not actual transfer)

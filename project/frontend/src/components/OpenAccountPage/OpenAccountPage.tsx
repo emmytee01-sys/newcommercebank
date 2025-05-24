@@ -5,6 +5,18 @@ import { useJsApiLoader, Autocomplete, Libraries } from '@react-google-maps/api'
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 
+// Example country/state data (expand as needed)
+const countryStateData: Record<string, string[]> = {
+  "United States": ["Alabama", "Alaska", "California", "New York", "Texas", "Florida", "Illinois", "Ohio", "Georgia", "Pennsylvania", "Michigan", "North Carolina", "New Jersey", "Virginia", "Washington", "Arizona", "Massachusetts", "Tennessee", "Indiana", "Missouri", "Maryland", "Wisconsin", "Colorado", "Minnesota", "South Carolina", "Alabama", "Louisiana", "Kentucky", "Oregon", "Oklahoma", "Connecticut", "Iowa", "Mississippi", "Arkansas", "Utah", "Nevada", "Kansas", "New Mexico", "Nebraska", "West Virginia", "Idaho", "Hawaii", "Maine", "New Hampshire", "Montana", "Rhode Island", "Delaware", "South Dakota", "North Dakota", "Alaska", "Vermont", "Wyoming"],
+  "France": ["Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Bretagne", "Centre-Val de Loire", "Corse", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandie", "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur"],
+  "Canada": ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Nova Scotia", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan"],
+  "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
+  "Germany": ["Baden-Württemberg", "Bavaria", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hesse", "Lower Saxony", "Mecklenburg-Vorpommern", "North Rhine-Westphalia", "Rhineland-Palatinate", "Saarland", "Saxony", "Saxony-Anhalt", "Schleswig-Holstein", "Thuringia"],
+  // ...add more countries and their states/provinces
+};
+
+const allCountries = Object.keys(countryStateData);
+
 interface FormData {
   firstName: string;
   middleName: string;
@@ -16,6 +28,7 @@ interface FormData {
   address: string;
   city: string;
   state: string;
+  country: string; // <-- add this line
   zipCode: string;
   employmentStatus: string;
   annualIncome: string;
@@ -47,6 +60,7 @@ const OpenAccountPage: React.FC = () => {
     address: '',
     city: '',
     state: '',
+    country: '', // <-- add this line
     zipCode: '',
     employmentStatus: '',
     annualIncome: '',
@@ -215,20 +229,7 @@ const OpenAccountPage: React.FC = () => {
           required
         />
       </div>
-      <div>
-        <label htmlFor="ssn" className="block text-sm font-medium text-gray-700 mb-1">
-          Social Security Number*
-        </label>
-        <input
-          type="text"
-          id="ssn"
-          name="ssn"
-          value={formData.ssn}
-          onChange={handleInputChange}
-          className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
-          required
-        />
-      </div>
+     
     </div>
   );
 
@@ -278,8 +279,26 @@ const OpenAccountPage: React.FC = () => {
           />
         </div>
         <div>
+          <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+            Country*
+          </label>
+          <select
+            id="country"
+            name="country"
+            value={formData.country}
+            onChange={handleInputChange}
+            className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+            required
+          >
+            <option value="">Select Country</option>
+            {allCountries.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+        <div>
           <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-            State*
+            State/Province/Region*
           </label>
           <select
             id="state"
@@ -288,74 +307,30 @@ const OpenAccountPage: React.FC = () => {
             onChange={handleInputChange}
             className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
             required
+            disabled={!formData.country}
           >
-            <option value="">Select State</option>
-            <option value="AL">Alabama</option>
-            <option value="AK">Alaska</option>
-            <option value="AZ">Arizona</option>
-            <option value="AR">Arkansas</option>
-            <option value="CA">California</option>
-            <option value="CO">Colorado</option>
-            <option value="CT">Connecticut</option>
-            <option value="DE">Delaware</option>
-            <option value="FL">Florida</option>
-            <option value="GA">Georgia</option>
-            <option value="HI">Hawaii</option>
-            <option value="ID">Idaho</option>
-            <option value="IL">Illinois</option>
-            <option value="IN">Indiana</option>
-            <option value="IA">Iowa</option>
-            <option value="KS">Kansas</option>
-            <option value="KY">Kentucky</option>
-            <option value="LA">Louisiana</option>
-            <option value="ME">Maine</option>
-            <option value="MD">Maryland</option>
-            <option value="MA">Massachusetts</option>
-            <option value="MI">Michigan</option>
-            <option value="MN">Minnesota</option>
-            <option value="MS">Mississippi</option>
-            <option value="MO">Missouri</option>
-            <option value="MT">Montana</option>
-            <option value="NE">Nebraska</option>
-            <option value="NV">Nevada</option>
-            <option value="NH">New Hampshire</option>
-            <option value="NJ">New Jersey</option>
-            <option value="NM">New Mexico</option>
-            <option value="NY">New York</option>
-            <option value="NC">North Carolina</option>
-            <option value="ND">North Dakota</option>
-            <option value="OH">Ohio</option>
-            <option value="OK">Oklahoma</option>
-            <option value="OR">Oregon</option>
-            <option value="PA">Pennsylvania</option>
-            <option value="RI">Rhode Island</option>
-            <option value="SC">South Carolina</option>
-            <option value="SD">South Dakota</option>
-            <option value="TN">Tennessee</option>
-            <option value="TX">Texas</option>
-            <option value="UT">Utah</option>
-            <option value="VT">Vermont</option>
-            <option value="VA">Virginia</option>
-            <option value="WA">Washington</option>
-            <option value="WV">West Virginia</option>
-            <option value="WI">Wisconsin</option>
-            <option value="WY">Wyoming</option>
+            <option value="">Select State/Province</option>
+            {(formData.country && countryStateData[formData.country])
+              ? countryStateData[formData.country].map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))
+              : null}
           </select>
         </div>
-        <div>
-          <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-            ZIP Code*
-          </label>
-          <input
-            type="text"
-            id="zipCode"
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
-            required
-          />
-        </div>
+      </div>
+      <div>
+        <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+          ZIP Code*
+        </label>
+        <input
+          type="text"
+          id="zipCode"
+          name="zipCode"
+          value={formData.zipCode}
+          onChange={handleInputChange}
+          className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+          required
+        />
       </div>
       <div>
         <label htmlFor="employmentStatus" className="block text-sm font-medium text-gray-700 mb-1">
@@ -384,6 +359,24 @@ const OpenAccountPage: React.FC = () => {
           id="annualIncome"
           name="annualIncome"
           value={formData.annualIncome}
+          onChange={handleInputChange}
+          className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="ssn" className="block text-sm font-medium text-gray-700 mb-1">
+          {formData.country === "United States"
+            ? "Social Security Number*"
+            : formData.country === "France"
+              ? "NIR*"
+              : "National ID Number*"}
+        </label>
+        <input
+          type="text"
+          id="ssn"
+          name="ssn"
+          value={formData.ssn}
           onChange={handleInputChange}
           className="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500"
           required
@@ -567,6 +560,15 @@ const OpenAccountPage: React.FC = () => {
       </div>
     );
   }
+
+  const states = formData.country ? countryStateData[formData.country] || [] : [];
+
+  // Determine label for SSN/NIR
+  const ssnLabel = formData.country === "United States"
+    ? "Social Security Number"
+    : formData.country === "France"
+      ? "NIR"
+      : "National ID Number";
 
   return (
     <div className="min-h-screen bg-gray-50">
