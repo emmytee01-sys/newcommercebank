@@ -26,6 +26,13 @@ router.get('/admin/users', authMiddleware, adminMiddleware, async (req, res) => 
   // Only accessible by admins
 });
 
+// Example route
+router.get('/me', authMiddleware, async (req, res) => {
+  const user = await User.findById(req.user.id).select('firstName lastName email');
+  res.json(user);
+});
+
+
 // Get account details by account number
 router.get('/:accountNumber', async (req, res) => {
   try {
